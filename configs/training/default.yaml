@@ -40,3 +40,4 @@ load_best_model_at_end: true             # Recharge automatiquement le meilleur 
 remove_unused_columns: false             # Ne pas supprimer de colonnes (les colonnes audio sont custom)
 label_names: ["labels"]                  # Nom de la colonne cible dans le batch
 dataloader_num_workers: 4               # Workers parallèles pour le chargement des données
+max_steps: -1                            # Limite du nombre d'étapes d'entraînement (-1 = désactivé, utilise num_train_epochs)

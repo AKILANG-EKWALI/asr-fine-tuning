@@ -1,0 +1,48 @@
+# =============================================================================
+# configs/data/fulfulde.yaml
+# Configuration du dataset Fulfuldé propre local.
+# =============================================================================
+
+# @package data
+
+# --- Chemins ---
+data_dir: "/Users/ekwali/Documents/akilang_asr_pipeline/akilang-whisper/data/fulfulde"
+audio_dir: "/Users/ekwali/multilingual_asr_pipeline"
+metadata_dir: "${data.data_dir}"
+
+# --- Colonnes TSV ---
+path_column: "audio_filepath"
+transcription_column: "text_clean"
+duration_column: "duration"
+
+# --- Fichiers de split ---
+train_tsv: "train.tsv"
+eval_tsv: "dev.tsv"
+test_tsv: "test.tsv"
+
+# --- Paramètres audio ---
+sample_rate: 16000
+
+# --- Filtrage qualité ---
+min_duration_sec: 0.5
+max_duration_sec: 30.0
+max_text_length: 200
+
+# --- Cache Hugging Face Datasets ---
+cache_dir: ${hydra:runtime.output_dir}/cache
+
+# --- Augmentation (désactivée pour le baseline d'entraînement initial) ---
+augmentation:
+  enabled: false
+  prob: 0.7
+  bandpass:
+    min_center_freq: 300
+    max_center_freq: 3400
+    p: 0.8
+  noise:
+    noise_dir: "./data/noise"
+    min_snr_db: 5
+    max_snr_db: 15
+    p: 0.8
+  g711:
+    enabled: true

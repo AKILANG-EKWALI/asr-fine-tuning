@@ -66,6 +66,10 @@ def main(cfg: DictConfig) -> None:
     logger.info("Construction du modèle avec LoRA...")
     model = build_model_with_lora(cfg)
 
+    # Requis pour le gradient checkpointing avec PEFT (LoRA) pour que PyTorch suive les gradients
+    if cfg.training.gradient_checkpointing and cfg.model.use_peft:
+        model.enable_input_require_grads()
+
     # Fixe les tokens forcés au décodeur pour contraindre la langue (Fulfuldé)
     # et la tâche (transcription) — crucial pour ne pas transcriber en anglais
     model.config.forced_decoder_ids = processor.get_decoder_prompt_ids(
@@ -154,6 +158,7 @@ def main(cfg: DictConfig) -> None:
         dataloader_num_workers=cfg.training.dataloader_num_workers,
         seed=cfg.seed,
         predict_with_generate=True,   # Active la génération pour le calcul WER/CER
+        max_steps=cfg.training.max_steps,  # Permet de couper l'entraînement après N pas (utile pour dry-run)
     )
 
     # ==========================================================================

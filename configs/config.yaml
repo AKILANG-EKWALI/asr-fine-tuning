@@ -6,7 +6,7 @@
 
 defaults:
   - _self_                        # Lit d'abord ce fichier, puis les overrides
-  - data: commonvoice_fuv         # Charge configs/data/commonvoice_fuv.yaml sous la clé `data`
+  - data: fulfulde                # Charge configs/data/fulfulde.yaml sous la clé `data`
   - model: whisper_base_lora      # Charge configs/model/whisper_base_lora.yaml sous la clé `model`
   - training: default             # Charge configs/training/default.yaml sous la clé `training`
   - mlops: default                # Charge configs/mlops/default.yaml sous la clé `mlops`

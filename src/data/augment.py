@@ -15,7 +15,10 @@ import random
 import numpy as np
 import torch
 import torchaudio
-import audiomentations as A
+try:
+    import audiomentations as A
+except ImportError:
+    A = None
 from omegaconf import DictConfig
 
 
@@ -39,24 +42,31 @@ class TelephoneAugmenter:
         self.enabled = cfg.data.augmentation.enabled   # Killswitch global
         self.prob    = cfg.data.augmentation.prob       # Probabilité par exemple
 
-        # --- Filtre passe-bande (audiomentations) ---
-        # BandPassFilter : conserve uniquement les fréquences entre min et max
-        # La bande téléphonique standard est 300–3400 Hz
-        self.bandpass = A.BandPassFilter(
-            min_center_frequency=cfg.data.augmentation.bandpass.min_center_freq,
-            max_center_frequency=cfg.data.augmentation.bandpass.max_center_freq,
-            min_bandwidth_fraction=0.5,   # Largeur de bande minimale = 50% de la fréquence centrale
-            max_bandwidth_fraction=0.8,   # Largeur de bande maximale = 80%
-            p=cfg.data.augmentation.bandpass.p,
-        )
+        if self.enabled:
+            if A is None:
+                raise ImportError(
+                    "Le module 'audiomentations' n'est pas disponible dans votre environnement. "
+                    "Veuillez l'installer (ex: pip install audiomentations) ou désactivez "
+                    "les augmentations dans la config (ex: data.augmentation.enabled=false)."
+                )
+            # --- Filtre passe-bande (audiomentations) ---
+            self.bandpass = A.BandPassFilter(
+                min_center_frequency=cfg.data.augmentation.bandpass.min_center_freq,
+                max_center_frequency=cfg.data.augmentation.bandpass.max_center_freq,
+                min_bandwidth_fraction=0.5,
+                max_bandwidth_fraction=0.8,
+                p=cfg.data.augmentation.bandpass.p,
+            )
 
-        # --- Bruit additif gaussien (audiomentations) ---
-        # AddGaussianSNR ajoute un bruit blanc gaussien calibré par le SNR cible
-        self.noise_aug = A.AddGaussianSNR(
-            min_snr_db=cfg.data.augmentation.noise.min_snr_db,  # 5 dB = bruit important
-            max_snr_db=cfg.data.augmentation.noise.max_snr_db,  # 15 dB = bruit léger
-            p=cfg.data.augmentation.noise.p,
-        )
+            # --- Bruit additif gaussien (audiomentations) ---
+            self.noise_aug = A.AddGaussianSNR(
+                min_snr_db=cfg.data.augmentation.noise.min_snr_db,
+                max_snr_db=cfg.data.augmentation.noise.max_snr_db,
+                p=cfg.data.augmentation.noise.p,
+            )
+        else:
+            self.bandpass = None
+            self.noise_aug = None
 
     def __call__(self, audio_array: np.ndarray, sample_rate: int) -> np.ndarray:
         """
