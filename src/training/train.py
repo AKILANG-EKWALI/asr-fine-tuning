@@ -92,9 +92,11 @@ def main(cfg: DictConfig) -> None:
         Combine augmentation + préparation Whisper pour le split train.
         L'augmentation est aléatoire (prob=0.7 par défaut).
         """
-        audio = example["audio"]
+        # Conversion en dict standard pour éviter les erreurs d'assignation sur les versions récentes de 'datasets' (Kaggle)
+        audio = dict(example["audio"])
         # Augmentation du signal brut avant extraction de features
         audio["array"] = augmenter(audio["array"], audio["sampling_rate"])
+        example["audio"] = audio
         return prepare_dataset_for_whisper(example, processor, cfg)
 
     # Colonnes à supprimer après la transformation (elles ne sont plus nécessaires)
