@@ -1,0 +1,45 @@
+# =============================================================================
+# Dockerfile.inference
+# Image Docker légère pour l'inférence avec Faster-Whisper (CTranslate2).
+#
+# Base : python:3.10-slim
+#   → Image minimale Debian, pas de CUDA (l'inférence CPU est supportée)
+#   → Pour inférence GPU, remplacer par nvidia/cuda:12.1.0-runtime-ubuntu22.04
+# =============================================================================
+
+FROM python:3.10-slim
+
+# Métadonnées
+LABEL maintainer="Akilang Project"
+LABEL description="Inférence Fulfuldé avec Faster-Whisper (CTranslate2)"
+LABEL version="1.0"
+
+WORKDIR /app
+
+# --- Installation des dépendances système minimales ---
+# ffmpeg    : décodage audio pour Faster-Whisper
+# libsndfile1 : lecture de fichiers WAV par soundfile
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ffmpeg \
+        libsndfile1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# --- Installation des dépendances Python d'inférence ---
+# requirements_inference.txt : sous-ensemble minimal (sans HF Trainer, MLflow, etc.)
+COPY requirements_inference.txt .
+RUN pip install --no-cache-dir -r requirements_inference.txt
+
+# --- Copie du code source ---
+COPY . .
+
+# --- Utilisateur non-root ---
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
+# Point d'entrée : API de transcription
+# Usage : docker run --rm -v /path/to/ct2:/app/model -v /path/to/audio:/audio \
+#           akilang-inference /audio/test.wav --model_dir /app/model
+ENTRYPOINT ["python", "src/inference/inference_api.py"]

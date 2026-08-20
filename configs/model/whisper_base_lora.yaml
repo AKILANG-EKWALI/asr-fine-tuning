@@ -1,0 +1,35 @@
+# =============================================================================
+# configs/model/whisper_base_lora.yaml
+# Configuration du modèle Whisper + adaptateurs LoRA (PEFT).
+# Modifier `name` pour passer à whisper-small, whisper-medium, etc.
+# =============================================================================
+
+# @package model   ← directive Hydra : place le contenu sous la clé `model`
+
+# Identifiant Hugging Face Hub (ou chemin local) du modèle pré-entraîné
+name: "openai/whisper-base"
+
+# Langue cible — code BCP-47 du Fulfuldé
+language: "fuv"
+
+# Tâche Whisper : "transcribe" (ASR) ou "translate" (traduction vers l'anglais)
+task: "transcribe"
+
+# Active l'adaptation LoRA via la bibliothèque PEFT
+use_peft: true
+
+lora:
+  # Rang de la décomposition LoRA : valeur faible = moins de paramètres entraînables
+  r: 8
+
+  # Facteur de mise à l'échelle des poids LoRA (lora_alpha / r = multiplicateur effectif)
+  lora_alpha: 32
+
+  # Dropout sur les couches LoRA pour régularisation
+  lora_dropout: 0.05
+
+  # Biais : "none" = on ne fine-tune pas les biais (recommandé pour économiser la VRAM)
+  bias: "none"
+
+  # Modules cibles pour LoRA — ["auto"] déclenche la détection automatique des linéaires
+  target_modules: ["q_proj", "v_proj"]

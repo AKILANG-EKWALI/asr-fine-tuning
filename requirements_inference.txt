@@ -1,0 +1,16 @@
+# =============================================================================
+# requirements_inference.txt
+# Dépendances minimales pour l'image d'inférence (Dockerfile.inference).
+# Sous-ensemble de requirements.txt — pas de Trainer HF, pas de MLflow, etc.
+# =============================================================================
+
+# --- Inférence Faster-Whisper ---
+faster-whisper                  # API haut niveau pour Whisper avec CTranslate2
+ctranslate2                     # Runtime CTranslate2 (quantization INT8/FP16)
+
+# --- Audio IO ---
+soundfile                       # Lecture de fichiers audio (WAV, FLAC)
+librosa                         # Lecture audio étendue (MP3, OGG via audioread)
+
+# --- Optionnel : export ONNX si besoin depuis l'image d'inférence ---
+# optimum[onnxruntime]          # Décommenter si l'inférence ONNX est nécessaire

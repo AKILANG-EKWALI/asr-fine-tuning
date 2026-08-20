@@ -1,0 +1,62 @@
+[tool.black]
+# Configuration Black — formatage Python automatique
+line-length = 100                     # Longueur maximale de ligne (par défaut 88)
+target-version = ['py310']            # Python 3.10 cible
+include = '\.pyi?$'                   # Formate .py et .pyi
+extend-exclude = '''
+/(
+  # Exclure les dossiers générés et le cache
+  | \.eggs
+  | \.git
+  | \.venv
+  | __pycache__
+  | outputs
+  | mlflow
+)/
+'''
+
+[tool.isort]
+# Configuration isort — tri automatique des imports
+profile = "black"                     # Compatible avec le style Black
+line_length = 100
+known_first_party = ["src"]           # Imports internes du projet
+known_third_party = [                 # Imports tiers (pour le tri)
+  "torch", "torchaudio", "transformers",
+  "datasets", "peft", "evaluate",
+  "audiomentations", "mlflow",
+  "hydra", "omegaconf", "librosa",
+  "soundfile", "numpy"
+]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.pytest.ini_options]
+# Configuration pytest
+testpaths = ["tests"]                 # Répertoire de tests
+python_files = ["test_*.py"]         # Pattern des fichiers de test
+python_functions = ["test_*"]        # Pattern des fonctions de test
+addopts = [
+  "-v",                              # Mode verbeux
+  "--tb=short",                      # Traceback court en cas d'erreur
+  "--strict-markers",                # Erreur si marker inconnu utilisé
+]
+markers = [
+  "slow: Tests lents (nécessitant un GPU ou un accès réseau)",
+  "integration: Tests d'intégration (nécessitant les données réelles)",
+]
+
+[tool.coverage.run]
+# Configuration de la couverture de code (pytest-cov)
+source = ["src"]
+omit = [
+  "*/tests/*",
+  "*/__init__.py",
+  "*/inference/inference_api.py",    # Script CLI, difficile à tester unitairement
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if __name__ == .__main__.:",
+  "raise NotImplementedError",
+]

@@ -1,0 +1,23 @@
+# =============================================================================
+# configs/config.yaml
+# Point d'entrée principal de Hydra. Toutes les sous-configs sont chargées ici.
+# Hydra résout les variables de référence (${...}) au moment de l'exécution.
+# =============================================================================
+
+defaults:
+  - _self_                        # Lit d'abord ce fichier, puis les overrides
+  - data: commonvoice_fuv         # Charge configs/data/commonvoice_fuv.yaml sous la clé `data`
+  - model: whisper_base_lora      # Charge configs/model/whisper_base_lora.yaml sous la clé `model`
+  - training: default             # Charge configs/training/default.yaml sous la clé `training`
+  - mlops: default                # Charge configs/mlops/default.yaml sous la clé `mlops`
+
+# Nom de l'expérience (utilisé par MLflow et dans le chemin de sortie Hydra)
+experiment_name: akilang_whisper_fuv
+
+# Graine aléatoire pour la reproductibilité totale (PyTorch, NumPy, datasets…)
+seed: 42
+
+hydra:
+  run:
+    # Répertoire de sortie horodaté pour chaque run — évite tout écrasement
+    dir: outputs/${experiment_name}/${now:%Y-%m-%d_%H-%M-%S}

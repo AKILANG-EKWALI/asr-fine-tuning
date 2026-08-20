@@ -1,0 +1,41 @@
+# =============================================================================
+# configs/mlops/default.yaml
+# Configuration MLOps : suivi d'expériences, quality gate et export.
+# =============================================================================
+
+# @package mlops   ← directive Hydra
+
+# Backend de suivi des métriques ("mlflow" est le seul supporté actuellement)
+tracking_backend: "mlflow"
+
+mlflow:
+  # URI de tracking : "file:///mlflow" = stockage local dans le dossier ./mlflow
+  # Pour un serveur distant : "http://mlflow-server:5000"
+  tracking_uri: "file:///mlflow"
+
+  # Nom de l'expérience MLflow (référencé depuis config.yaml via interpolation)
+  experiment_name: ${experiment_name}
+
+  # Nom du run (null = auto-généré par MLflow)
+  run_name: null
+
+  # Enregistre le modèle final dans le Model Registry MLflow
+  log_model: true
+
+# --- Quality Gate ---
+# Seuils maximaux acceptables avant de valider l'export
+quality_gate:
+  max_wer: 25.0      # Word Error Rate maximum autorisé (%)
+  max_cer: 30.0      # Character Error Rate maximum autorisé (%)
+
+# --- Export ---
+export:
+  # Dossier de sortie de l'export ONNX
+  onnx_dir: ${hydra:runtime.output_dir}/export/onnx
+
+  # Dossier de sortie de l'export CTranslate2 (Faster-Whisper)
+  ct2_dir: ${hydra:runtime.output_dir}/export/ct2
+
+  # Niveau de quantification : "int8_float16" = INT8 sur CPU, FP16 sur GPU
+  # Autres options : "int8", "float16", "float32"
+  quantization: "int8_float16"

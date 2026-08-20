@@ -1,0 +1,103 @@
+# =============================================================================
+# docker-compose.yml
+# Orchestration des services Docker pour le pipeline Akilang Whisper.
+#
+# Services :
+#   train     : Fine-tuning Whisper avec GPU
+#   evaluate  : Évaluation + Quality Gate
+#   export    : Export ONNX + CTranslate2
+#   inference : Transcription avec Faster-Whisper
+#   mlflow    : Serveur MLflow UI (optionnel)
+# =============================================================================
+
+version: "3.8"
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Service d'entraînement
+  # ---------------------------------------------------------------------------
+  train:
+    build:
+      context: .
+      dockerfile: Dockerfile.train    # Image avec PyTorch + CUDA
+    image: akilang-train:latest
+    shm_size: '2gb'                   # Mémoire partagée pour les DataLoader workers
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia          # Nécessite nvidia-container-toolkit sur l'hôte
+              count: 1                # Utilise 1 GPU (changer pour "all" si multi-GPU)
+              capabilities: [gpu]
+
+    volumes:
+      - ./outputs:/app/outputs        # Checkpoints et modèles exportés (persistants)
+      - ./mlflow:/mlflow              # Tracking MLflow (persistant)
+      - ./data:/app/data              # Dataset local (lecture seule conseillée)
+
+    environment:
+      - MLFLOW_TRACKING_URI=file:///mlflow   # URI MLflow dans le conteneur
+      - NVIDIA_VISIBLE_DEVICES=all           # Expose tous les GPUs NVIDIA disponibles
+      - PYTHONUNBUFFERED=1                   # Logs en temps réel (pas de buffering)
+
+    command: []                       # Laisse l'ENTRYPOINT Hydra gérer les args
+
+  # ---------------------------------------------------------------------------
+  # Service d'évaluation (CPU, image train réutilisée)
+  # ---------------------------------------------------------------------------
+  evaluate:
+    build:
+      context: .
+      dockerfile: Dockerfile.train
+    image: akilang-train:latest
+    volumes:
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["bash", "scripts/evaluate.sh"]   # Exécute evaluate.py + quality_gate.py
+
+  # ---------------------------------------------------------------------------
+  # Service d'export
+  # ---------------------------------------------------------------------------
+  export:
+    build:
+      context: .
+      dockerfile: Dockerfile.train
+    image: akilang-train:latest
+    volumes:
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "src/export/export_model.py"]
+
+  # ---------------------------------------------------------------------------
+  # Service d'inférence (image légère, CPU uniquement)
+  # ---------------------------------------------------------------------------
+  inference:
+    build:
+      context: .
+      dockerfile: Dockerfile.inference    # Image slim sans CUDA
+    image: akilang-inference:latest
+    volumes:
+      - ./outputs:/app/outputs            # Accès au modèle CTranslate2 exporté
+    environment:
+      - CT2_MODEL_DIR=/app/outputs/export/ct2  # Répertoire du modèle CT2
+      - PYTHONUNBUFFERED=1
+
+  # ---------------------------------------------------------------------------
+  # Serveur MLflow UI (optionnel — accès via http://localhost:5000)
+  # ---------------------------------------------------------------------------
+  mlflow-ui:
+    image: python:3.10-slim
+    command: >
+      bash -c "pip install mlflow --quiet &&
+               mlflow ui --host 0.0.0.0 --port 5000 --backend-store-uri /mlflow"
+    ports:
+      - "5000:5000"                     # Expose le port 5000 sur l'hôte
+    volumes:
+      - ./mlflow:/mlflow                # Partage le stockage MLflow avec le service train
+    profiles:
+      - monitoring                      # Démarré uniquement avec : docker compose --profile monitoring up

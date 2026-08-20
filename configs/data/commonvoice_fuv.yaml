@@ -1,0 +1,52 @@
+# =============================================================================
+# configs/data/commonvoice_fuv.yaml
+# Configuration du dataset Common Voice Fulfuldé local.
+# Toutes les valeurs sont injectées dans le code via cfg.data.*
+# =============================================================================
+
+# @package data   ← directive Hydra : place le contenu sous la clé `data`
+
+# --- Chemins ---
+data_dir: "./data/clean"                     # Racine du dataset local
+audio_dir: "${data.data_dir}/clips"          # Dossier contenant les fichiers audio
+metadata_dir: "${data.data_dir}"             # Dossier contenant les TSV
+
+# --- Colonnes TSV ---
+path_column: "path"                          # Colonne du chemin relatif audio
+transcription_column: "sentence"             # Colonne texte de référence
+duration_column: "duration"                  # Colonne durée (optionnelle, gérée si absente)
+
+# --- Fichiers de split ---
+train_tsv: "train.tsv"
+eval_tsv: "dev.tsv"
+test_tsv: "test.tsv"
+
+# --- Paramètres audio ---
+sample_rate: 16000                           # Fréquence d'échantillonnage cible (Hz)
+
+# --- Filtrage qualité ---
+min_duration_sec: 0.5                        # Rejette les audios < 0.5 s (trop courts)
+max_duration_sec: 30.0                       # Rejette les audios > 30 s (hors capacité Whisper)
+max_text_length: 200                         # Rejette les transcriptions trop longues (en mots)
+
+# --- Cache Hugging Face Datasets ---
+cache_dir: ${hydra:runtime.output_dir}/cache # Stockage du cache dans le dossier de run
+
+# --- Augmentation téléphonique ---
+augmentation:
+  enabled: true                              # Active/désactive toute l'augmentation
+  prob: 0.7                                  # Probabilité d'augmenter un exemple donné
+
+  bandpass:                                  # Filtre passe-bande 300–3400 Hz (simulation téléphonique)
+    min_center_freq: 300
+    max_center_freq: 3400
+    p: 0.8                                   # Probabilité d'appliquer ce filtre
+
+  noise:                                     # Bruit additif gaussien (SNR 5–15 dB)
+    noise_dir: "./data/noise"                # Dossier de bruits ambiants (optionnel)
+    min_snr_db: 5
+    max_snr_db: 15
+    p: 0.8
+
+  g711:                                      # Simulation codec G.711 (rééchantillonnage 16k→8k→16k)
+    enabled: true

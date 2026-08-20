@@ -1,0 +1,42 @@
+# =============================================================================
+# configs/training/default.yaml
+# Hyperparamètres d'entraînement — tous injectés dans Seq2SeqTrainingArguments.
+# =============================================================================
+
+# @package training   ← directive Hydra
+
+# Répertoire de sauvegarde des checkpoints (résolu par Hydra à l'exécution)
+output_dir: ${hydra:runtime.output_dir}/checkpoints
+
+# --- Tailles de batch ---
+per_device_train_batch_size: 8              # Batch par GPU (entraînement)
+per_device_eval_batch_size: 8              # Batch par GPU (évaluation)
+
+# Accumulation de gradients : batch effectif = batch_size × gradient_accumulation_steps
+gradient_accumulation_steps: 2            # Batch effectif = 16 exemples par pas de mise à jour
+
+# --- Optimisation ---
+learning_rate: 1e-4                        # Taux d'apprentissage initial (Adam)
+warmup_steps: 500                          # Montée progressive du LR sur 500 pas
+num_train_epochs: 5                        # Nombre d'époques total
+
+# --- Précision & mémoire ---
+fp16: true                                 # Mixed precision FP16 (nécessite GPU Ampere ou +)
+gradient_checkpointing: true              # Recompute les activations pour économiser la VRAM
+
+# --- Stratégie de sauvegarde / évaluation ---
+evaluation_strategy: "steps"              # Évaluer périodiquement (pas tous les epochs)
+eval_steps: 500                            # Évaluation tous les 500 pas d'optimisation
+save_steps: 500                            # Checkpoint tous les 500 pas
+logging_steps: 50                          # Log toutes les 50 étapes dans MLflow / console
+save_total_limit: 3                        # Garder au maximum 3 checkpoints sur disque
+
+# --- Sélection du meilleur modèle ---
+metric_for_best_model: "wer"              # Métrique de référence pour early stopping
+greater_is_better: false                  # WER : plus bas = meilleur
+load_best_model_at_end: true             # Recharge automatiquement le meilleur checkpoint
+
+# --- Divers ---
+remove_unused_columns: false             # Ne pas supprimer de colonnes (les colonnes audio sont custom)
+label_names: ["labels"]                  # Nom de la colonne cible dans le batch
+dataloader_num_workers: 4               # Workers parallèles pour le chargement des données

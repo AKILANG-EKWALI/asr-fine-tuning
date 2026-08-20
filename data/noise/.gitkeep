@@ -1,0 +1,9 @@
+# Ce dossier est intentionnellement vide.
+# Placez ici des fichiers audio de bruit ambiant (.wav, .mp3)
+# pour l'augmentation AddBackgroundNoise (audiomentations).
+#
+# Si ce dossier est vide, seul le bruit gaussien (AddGaussianSNR) sera utilisé.
+# Sources de bruit recommandées :
+#   - MUSAN (https://www.openslr.org/17/)
+#   - ESC-50 (https://github.com/karolpiczak/ESC-50)
+#   - DNS Challenge noise (https://github.com/microsoft/DNS-Challenge)

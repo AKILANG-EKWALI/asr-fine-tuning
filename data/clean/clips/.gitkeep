@@ -1,0 +1,11 @@
+# Ce dossier est intentionnellement vide.
+# Placez ici vos fichiers audio .wav ou .mp3 (16 kHz) nettoyés.
+# Ces fichiers sont exclus de Git (voir .gitignore) — gérez-les avec DVC.
+#
+# Format attendu :
+#   data/clean/clips/fichier1.wav
+#   data/clean/clips/fichier2.mp3
+#   ...
+#
+# Le chemin relatif de chaque fichier doit correspondre à la colonne "path"
+# dans les fichiers TSV (train.tsv, dev.tsv, test.tsv).

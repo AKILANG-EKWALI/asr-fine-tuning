@@ -1,0 +1,83 @@
+# =============================================================================
+# dvc.yaml
+# Pipeline DVC pour Akilang Whisper.
+#
+# Le pipeline définit les étapes (stages) et leurs dépendances.
+# DVC détermine automatiquement quelles étapes doivent être réexécutées
+# quand un fichier de dépendance change (versionning + cache).
+#
+# Usage :
+#   dvc repro             # Exécute toutes les étapes nécessaires
+#   dvc repro -s train    # Réexécute uniquement l'étape train
+#   dvc dag               # Affiche le graphe de dépendances
+# =============================================================================
+
+stages:
+
+  # ---------------------------------------------------------------------------
+  # Étape 1 : Entraînement
+  # ---------------------------------------------------------------------------
+  train:
+    cmd: python src/training/train.py
+    deps:
+      # Fichiers source — tout changement déclenche une réexécution
+      - src/training/train.py
+      - src/data/load_data.py
+      - src/data/augment.py
+      - src/data/collator.py
+      - src/model/build_model.py
+      - src/model/lora_utils.py
+      - src/training/metrics.py
+      # Fichiers de configuration Hydra
+      - configs/config.yaml
+      - configs/data/commonvoice_fuv.yaml
+      - configs/model/whisper_base_lora.yaml
+      - configs/training/default.yaml
+      - configs/mlops/default.yaml
+      # Dataset local (DVC surveille les changements dans ce dossier)
+      - data/clean
+    outs:
+      # Répertoire de sorties : DVC le versionne et le met en cache
+      - outputs/checkpoints:
+          persist: true   # Conserve les fichiers même après dvc gc
+
+  # ---------------------------------------------------------------------------
+  # Étape 2 : Évaluation sur le split test
+  # ---------------------------------------------------------------------------
+  evaluate:
+    cmd: python src/eval/evaluate.py
+    deps:
+      - outputs/checkpoints           # Dépend du checkpoint produit par train
+      - src/eval/evaluate.py
+      - src/training/metrics.py
+      - configs/config.yaml
+      - data/clean                    # Accès au split test
+    metrics:
+      - metrics.json:
+          cache: false                # metrics.json est tracké par Git, pas par DVC cache
+
+  # ---------------------------------------------------------------------------
+  # Étape 3 : Quality Gate
+  # ---------------------------------------------------------------------------
+  quality_gate:
+    cmd: python src/eval/quality_gate.py
+    deps:
+      - metrics.json                  # Produit par evaluate
+      - src/eval/quality_gate.py
+      - configs/config.yaml
+    outs: []                          # Pas de fichier de sortie — sert de checkpoint Go/No-Go
+
+  # ---------------------------------------------------------------------------
+  # Étape 4 : Export ONNX + CTranslate2
+  # ---------------------------------------------------------------------------
+  export:
+    cmd: python src/export/export_model.py
+    deps:
+      - outputs/checkpoints/final     # Checkpoint final post-entraînement
+      - src/export/export_model.py
+      - configs/config.yaml
+    outs:
+      - outputs/export/onnx:
+          persist: true
+      - outputs/export/ct2:
+          persist: true

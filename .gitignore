@@ -1,0 +1,67 @@
+# =============================================================================
+# .gitignore
+# Fichiers et dossiers à exclure du versioning Git.
+# Les données et modèles volumineux sont gérés par DVC, pas Git.
+# =============================================================================
+
+# --- Sorties d'entraînement (gérées par DVC) ---
+outputs/
+mlflow/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.eggs/
+dist/
+build/
+.eggs/
+*.so
+
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+.env/
+
+# --- Tests et couverture ---
+.pytest_cache/
+.coverage
+htmlcov/
+*.coverage
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Données sensibles (ne jamais commiter) ---
+data/clean/clips/           # Fichiers audio bruts (gérés par DVC)
+data/clean/*.tsv            # Métadonnées TSV (gérées par DVC)
+data/noise/                 # Bruits ambiants (gérés par DVC)
+
+# --- Cache HuggingFace ---
+.cache/
+*.cache
+
+# --- MLflow ---
+mlruns/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- DVC internals ---
+/tmp/
+
+# --- Fichiers de métriques temporaires ---
+metrics.json                # Produit par evaluate.py — tracké par DVC, pas Git
+
+# --- Hydra outputs ---
+# outputs/ est déjà exclu ci-dessus
+.hydra/
